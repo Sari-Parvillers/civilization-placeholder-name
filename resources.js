@@ -23,11 +23,11 @@ export class Resource {
 
     static fromSavedState(savedResource) {
         return new Resource(
-            name=savedResource.name,
-            maxFormula=savedResource.max,
-            tickFormula=savedResource.perTick,
-            htmlIDString=savedResource.htmlIDString,
-            current=savedResource.current
+            savedResource.name,
+            savedResource.max,
+            savedResource.perTick,
+            savedResource.htmlIDString,
+            savedResource.current
         )
     }
 }
