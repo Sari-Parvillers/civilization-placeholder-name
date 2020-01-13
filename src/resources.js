@@ -1,29 +1,33 @@
 export class Resource {
-    constructor(name, maxFormula, tickFormula, htmlIDString) {
+    constructor(name, maxFormula, tickFormula, htmlIDString, current=0) {
         this.name = name;
-        this.current = 0
+        this.current = current
         this.max = maxFormula
-        this.tick = tickFormula
+        this.perTick = tickFormula
+        this.htmlIDString = htmlIDString
+        this.htmlElement = document.querySelector(`#${htmlIDString} > .resourceCount`)
         
-        this.display = {
-            current: Math.floor(this.current),
-            max: Math.floor(this.max),
-            id: document.querySelector(`#${htmlIDString} > .resourceCount`)
-        }
     }
 
-    updateDisplay() {
-        this.display.current = Math.floor(this.current)
-        this.display.max = Math.floor(this.display.max)
-        this.display.string = `${this.display.current} / ${this.display.max} | +${this.tick}`
+    getDisplayString() {
+        return `${Math.floor(this.current)} / ${Math.floor(this.max)} | +${this.perTick}`
     }
 
     addTick() {
-        if (this.current + this.tick < this.max) {
-            this.current += this.tick
+        if (this.current + this.perTick < this.max) {
+            this.current += this.perTick
         } else {
             this.current = this.max
         }
-        this.updateDisplay()
+    }
+
+    static fromSavedState(savedResource) {
+        return new Resource(
+            name=savedResource.name,
+            maxFormula=savedResource.max,
+            tickFormula=savedResource.perTick,
+            htmlIDString=savedResource.htmlIDString,
+            current=savedResource.current
+        )
     }
 }
