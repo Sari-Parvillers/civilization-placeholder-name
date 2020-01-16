@@ -1,0 +1,26 @@
+{
+  "name": "civilization-placeholder-name",
+  "version": "0.1.0",
+  "description": "it's my game i'm making",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-vue": "^6.1.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sari-Dummy/civilization-placeholder-name.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Sari-Dummy/civilization-placeholder-name/issues"
+  },
+  "homepage": "https://github.com/Sari-Dummy/civilization-placeholder-name#readme"
+}
