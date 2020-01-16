@@ -1,5 +1,7 @@
-import {Resource} from "./resources.js"
+import {Resource, Population} from "./resources.js"
 
+
+// All saved data goes into this object.
 const gameState = {
     gameDate: {
         currentTickDate: 0
@@ -49,15 +51,33 @@ const gameState = {
 }
 
 // HTML related constants
-const tickButton = document.querySelector('#tickButton')
-tickButton.addEventListener('click', processTick)
-
 const forageButton = document.querySelector('#forageButton')
 forageButton.addEventListener('click', () => {gameState.resources.food.current += 1})
 
 const huntButton = document.querySelector('#huntButton')
 huntButton.addEventListener('click', goForHunt)
 const huntTimerDisplay = document.querySelector('#huntTimer')
+
+const gameLog = document.querySelector('#gameLog')
+let logArray = []
+
+
+
+// UI functions
+function renderUI() { // TODO: potentially generalize this shit? right now it only works for what is in gameState.resources, which might be annoying later idk
+    for (const resource in gameState.resources) {
+        gameState.resources[resource].htmlElement.innerHTML = gameState.resources[resource].displayString
+    }
+}
+
+
+function writeInGameLog(text) {
+    // Adds text element at the beginning of an array, remove last element if array is too big, print the whole array with line breaks in between each element
+    logArray.unshift(text)
+    logArray.splice(10, 1)
+    gameLog.innerHTML = logArray.join('<br>')
+}
+
 
 // Timer functions
 function addToTimers(delay, functionString) {
@@ -69,10 +89,14 @@ function addToTimers(delay, functionString) {
     }
 }
 
+
 let timedFunctions = {
     checkHuntTimer: {
         execute() {
             if (gameState.timerData.huntCountDown > 1) {
+                if (!('disabled' in huntButton.attributes)) {
+                    huntButton.setAttribute('disabled', 'disabled')
+                }
                 gameState.timerData.huntCountDown -= 1
                 addToTimers(10, 'checkHuntTimer')
                 huntTimerDisplay.innerHTML = gameState.timerData.huntCountDown
@@ -82,7 +106,7 @@ let timedFunctions = {
                 let huntYield = 10 + Math.round(Math.random()*20)
                 gameState.resources.food.current += huntYield
 
-                console.log(`The hunt yielded ${huntYield} food.`)  // TODO: Make this visible to the user.  
+                writeInGameLog(`The hunt yielded ${huntYield} food.`)  // TODO: Make this visible to the user.  
                 huntTimerDisplay.innerHTML = ""
                 huntButton.removeAttribute('disabled')
             }
@@ -92,7 +116,7 @@ let timedFunctions = {
 
 
 function goForHunt() {
-    console.log('The tribe is going out for a hunt.')
+    writeInGameLog('The tribe is going out for a hunt.')
 
     gameState.timerData.huntCountDown = 10  // timerFunctions.checkHuntTimer.execute() decrements this value by one every 10 ticks
     huntButton.setAttribute('disabled', 'disabled')
@@ -102,23 +126,15 @@ function goForHunt() {
 }
 
 
-// Global functions
+// Global game functions
 function startGame() {
     gameState.resources.food = new Resource('Food', 1000, 0.25, "food")
-    gameState.resources.population = new Resource('Population', 150, 0.01, "population")
-    gameState.resources.population.current = 10
+    gameState.resources.population = new Population()
 }
 
 
 function saveGame() {
     window.localStorage.setItem('gameState', JSON.stringify(gameState))
-}
-
-
-function renderUI() {
-    for (const resource in gameState.resources) {
-        gameState.resources[resource].htmlElement.innerHTML = gameState.resources[resource].getDisplayString()
-    }
 }
 
 
@@ -135,7 +151,7 @@ function processTick() {
 // Game start
 
 // First start
-if (!window.localStorage.getItem('gameState')) {  // TODO: true only if local storage exists
+if (!window.localStorage.getItem('gameState') || true) {  // TODO: true only if local storage exists
     console.log('starting game for the first time')
     startGame()
     processTick()
@@ -147,4 +163,7 @@ if (!window.localStorage.getItem('gameState')) {  // TODO: true only if local st
 }
 
 // Subsequent starts
+
+
+// exports
 export {gameState}

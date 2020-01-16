@@ -2,15 +2,28 @@
 <html>
     <head>
         <title>Test page</title>
+        <link rel="stylesheet" href="stylesheet.css">
     </head>
+
     <body>
-        <button id="tickButton">+TICK</button>
-        <ul id="resources">
-            <li id="population">Population: <span class="resourceCount">0</span></li>
-            <li id="food">Food: <span class="resourceCount">0</span></li>
-        </ul>
-        <button id="forageButton">Forage for food</button>
-        <button id="huntButton">Go for a hunt</button> <span id="huntTimer"></span>
+        <div class="mainGrid">
+            <div class="resourceBox">
+                <ul id="resources">
+                    <li id="population">Population: <span class="resourceCount">0</span></li>
+                    <li id="food">Food: <span class="resourceCount">0</span></li>
+                </ul>
+            </div>
+            
+            <div class="buttonBox">
+                <button class="mainScreenButton" id="forageButton">Forage</button>
+                <button class="mainScreenButton" id="huntButton">Hunt</button> <span id="huntTimer"></span>
+            </div>
+
+            <div class="logBox">
+                <span id="gameLog" class="gameLog">The log box is here</span>
+            </div>
+        </div>
+
         <script src="resources.js" type="module"></script>
         <script src="main.js" type="module"></script>
     </body>
