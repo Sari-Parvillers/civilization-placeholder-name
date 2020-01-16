@@ -1,0 +1,39 @@
+body {
+    font-family: 'Times New Roman', Times, serif;
+    background-color: black;
+    color: white;
+}
+
+.mainGrid {
+    display: grid;
+    grid-template-columns: 25% 75%;
+    grid-template-rows: auto 300px;
+    grid-gap: 5px 5px;
+}
+
+ .mainGrid > div {
+    background-color: #333333;
+    padding: 10px;
+}
+
+.logBox {
+    grid-column-start: 1;
+    grid-column-end: 3;
+    grid-row-start: 2;
+    grid-row-end: 3;
+}
+
+.mainScreenButton {
+    font-size: 1rem;
+    color: white;
+    background-color: rgba(0,0,0,0);
+    border: 1px solid;
+    line-height: 1.5rem;
+    width: 5rem;
+    padding: 0.15rem 0.5rem;
+    transition: all 0.15s;
+}
+
+.mainScreenButton:disabled {
+    color: grey;
+}
