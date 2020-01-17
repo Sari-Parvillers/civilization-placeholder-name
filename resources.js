@@ -1,66 +1,128 @@
+import { gameState } from './gameState.js'
+
 export class Resource {
-    constructor(name, capacity, growth, htmlIDString, current=0) {
-        this.name = name;
-        this.current = current
-        this.capacity = capacity
-        this.growthPerTick = growth
-        this.htmlIDString = htmlIDString
-        this.htmlElement = document.querySelector(`#${htmlIDString} > .resourceCount`)  
+    constructor(isUnlocked = false, current = 0) {
+        // Saved properties: these need to be loaded in at the start!
+        this.savedProperties = {
+            isUnlocked: isUnlocked,
+            current: current
+        }
+
+        // Static properties: these should be defined by default values for each subclass of Resource
+        this.name = 'Resource'
+        this.htmlIDString = null
+    }
+
+    /// Setters and Getters
+    get current() {
+        return this.savedProperties.current
+    }
+
+    set current(value) {
+        this.savedProperties.current = value
+    }
+
+    set addToCurrent(value) {
+        this.savedProperties.current += value
+    }
+
+    /// UI stuff
+    get htmlElement() {
+        return document.querySelector(`#${this.htmlIDString} > .resourceCount`)
     }
 
     get displayString() {
-        return `${Math.floor(this.current)} / ${Math.floor(this.capacity)} | +${(10*this.growthFormula).toFixed(2)}/s`
+        return `${Math.floor(this.current)} / ${Math.floor(this.capacity)} | +${(10 * this.growth).toFixed(2)}/s`
     }
 
-    get growthFormula() {
-        return this.growthPerTick
+
+    /// Formula stuff
+    // Capacity
+    get capacity() {
+        return 666666
     }
 
-    addTick() {
-            this.current += this.growthFormula
+    get overCapacityMax () {
+        /* This is the number of times the resource can go over its own capacity,
+        which in turn influences how quickly its growth decreases as it goes over. See get OverCapacityMult()
+        Note: might be useless, since I'm not sure overCapacityMax will be a dynamic property
+        that should ever be anything other than 1. But it might let me balance stuff more easily. */
+        return 1
     }
 
-    static fromSavedState(savedResource) {
-        return new Resource(
-            savedResource.name,
-            savedResource.capacity,
-            savedResource.perTick,
-            savedResource.htmlIDString,
-            savedResource.current
-        )
+    // Growth
+    get overCapacityMult() {
+        return Math.min(1, 1 - (this.current - this.capacity) / this.capacity * this.overCapacityMax)
+    }
+
+    get growth() {
+        return 666
+    }
+
+
+    /// Process functions
+    processGrowth() {
+        this.addToCurrent = this.growth
+    }
+
+
+    /// Load game from saved state
+    set fromSavedState(savedResource) {
+        this.savedProperties = savedResource.savedProperties
     }
 }
 
 
 export class Population extends Resource {
-    constructor(
-        name='Population',
-        capacity=20,
-        growth=null,
-        htmlIDString="population",
-        current=8
-    ) {
-        super(name, capacity, growth, htmlIDString, current)
+    constructor() {
+        super()
+        // Saved
+        this.savedProperties.isUnlocked = true
+        this.savedProperties.current = 8
+
+        // Static
+        this.name = 'Population'
+        this.htmlIDString = 'population'
     }
 
-    // The perTickFormula for population should always try to stablize at its capacity, unlike most other resources. If above its capacity, population will lower, if below, it will
-    // increase. The formula should be so that population growth increases the more people there are, but it decreases at it gets closer to its capacity. Same the other way around,
-    // the population should decrease faster the more it is over its capacity. (Maybe exponentially faster, to simulate the idea that losing a lot of capacity means a lot of people
-    // are dying of exposure or starvation, whilst being slightly over just means that the population stablizes to a lower amount.)
-    get growthFormula() {
-        let underCapacity = Math.max(0, this.capacity - this.current)
-        let overCapacity = Math.max(0, this.current - this.capacity)
-        let isOverCapacity = this.current > this.capacity
+    // Capacity
+    get capacity() {
+        return 20
+    }
+
+    // Growth
+    get growth() {
+        const underCapacity = Math.max(0, this.capacity - this.current)
+        const overCapacity = Math.max(0, this.current - this.capacity)
+        const isOverCapacity = this.current > this.capacity
         if (!isOverCapacity) {
             return Math.min(
-                this.current * 0.001, 
+                this.current * 0.001,
                 this.capacity - this.current
             )
         } else {
             return Math.min(-(overCapacity * 0.01), -0.01)
         }
     }
+}
 
-    // TODO: fromSavedState() changed so that it takes the new changes into account. It should be totally programmed, fromSavedState() should still only be in the parent class
+export class Food extends Resource {
+    constructor() {
+        super()
+        // Saved
+        this.savedProperties.isUnlocked = true
 
+        // Static
+        this.name = 'Food'
+        this.htmlIDString = 'food'
+    }
+
+    get capacity() {
+        return 1000
+    }
+
+    get growth() {
+        const foodWorkForce = Math.floor(gameState.resources.population.current)
+        return foodWorkForce * this.overCapacityMult
+    }
 }
