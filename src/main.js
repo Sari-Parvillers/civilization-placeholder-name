@@ -1,76 +1,19 @@
-import {Resource, Population} from "./resources.js"
-
-
-// All saved data goes into this object.
-const gameState = {
-    gameDate: {
-        currentTickDate: 0
-    },
-
-    resources: {},
-
-    // This keeps track of certain values, such as countdowns
-    timerData: {
-        huntCountDown: 0
-    }, 
-
-    // This keeps track of certain "tick dates" and the functions to run at these dates
-    timers: {},
-
-    addTick() {
-        this.gameDate.currentTickDate += 1
-        for (const resource in this.resources) {
-            this.resources[resource].addTick()
-        }
-    },
-
-    checkTimers() {
-        try {
-            const currentDate = this.gameDate.currentTickDate
-            if (currentDate in this.timers) { 
-                this.timers[currentDate].forEach(functionString => {
-                    console.log(this.timers)
-                    timedFunctions[functionString].execute()
-                })
-                delete this.timers[currentDate]
-            }
-        } 
-        catch (error) {
-            console.log(error)
-        }
-    },
-
-    load(savedGameState=JSON.parse(window.localStorage.getItem('gameState'))) {
-        for (const propertyKey in savedGameState) {
-            gameState[propertyKey] = savedGameState[propertyKey]
-        }
-        for (const resourceKey in savedGameState.resources) {
-            gameState.resources[resourceKey] = Resource.fromSavedState(savedGameState.resources[resourceKey])
-        }
-    }
-}
+import * as resourceModule from './resources.js'
+import { gameState } from './gameState.js'
 
 // HTML related constants
 const forageButton = document.querySelector('#forageButton')
-forageButton.addEventListener('click', () => {gameState.resources.food.current += 1})
+forageButton.addEventListener('click', () => { gameState.resources.food.addToCurrent = 1 })
 
 const huntButton = document.querySelector('#huntButton')
 huntButton.addEventListener('click', goForHunt)
 const huntTimerDisplay = document.querySelector('#huntTimer')
 
 const gameLog = document.querySelector('#gameLog')
-let logArray = []
+const logArray = []
 
 
-
-// UI functions
-function renderUI() { // TODO: potentially generalize this shit? right now it only works for what is in gameState.resources, which might be annoying later idk
-    for (const resource in gameState.resources) {
-        gameState.resources[resource].htmlElement.innerHTML = gameState.resources[resource].displayString
-    }
-}
-
-
+// UI (non-processes) functions
 function writeInGameLog(text) {
     // Adds text element at the beginning of an array, remove last element if array is too big, print the whole array with line breaks in between each element
     logArray.unshift(text)
@@ -81,7 +24,7 @@ function writeInGameLog(text) {
 
 // Timer functions
 function addToTimers(delay, functionString) {
-    let executionDate = gameState.gameDate.currentTickDate + delay
+    const executionDate = gameState.gameDate.currentTickDate + delay
     if (executionDate in gameState.timers) {
         gameState.timers[executionDate].push(functionString)
     } else {
@@ -90,26 +33,24 @@ function addToTimers(delay, functionString) {
 }
 
 
-let timedFunctions = {
-    checkHuntTimer: {
-        execute() {
-            if (gameState.timerData.huntCountDown > 1) {
-                if (!('disabled' in huntButton.attributes)) {
-                    huntButton.setAttribute('disabled', 'disabled')
-                }
-                gameState.timerData.huntCountDown -= 1
-                addToTimers(10, 'checkHuntTimer')
-                huntTimerDisplay.innerHTML = gameState.timerData.huntCountDown
-            } else {
-                gameState.timerData.huntCountDown -= 1
-
-                let huntYield = 10 + Math.round(Math.random()*20)
-                gameState.resources.food.current += huntYield
-
-                writeInGameLog(`The hunt yielded ${huntYield} food.`)  // TODO: Make this visible to the user.  
-                huntTimerDisplay.innerHTML = ""
-                huntButton.removeAttribute('disabled')
+const timedFunctions = {
+    checkHuntTimer() {
+        if (gameState.timerData.huntCountDown > 1) {
+            if (!('disabled' in huntButton.attributes)) {
+                huntButton.setAttribute('disabled', 'disabled')
             }
+            gameState.timerData.huntCountDown -= 1
+            addToTimers(10, 'checkHuntTimer')
+            huntTimerDisplay.innerHTML = gameState.timerData.huntCountDown
+        } else {
+            gameState.timerData.huntCountDown -= 1
+
+            const huntYield = 10 + Math.round(Math.random() * 20)
+            gameState.resources.food.addToCurrent = huntYield
+
+            writeInGameLog(`The hunt yielded ${huntYield} food.`)
+            huntTimerDisplay.innerHTML = ''
+            huntButton.removeAttribute('disabled')
         }
     }
 }
@@ -118,7 +59,7 @@ let timedFunctions = {
 function goForHunt() {
     writeInGameLog('The tribe is going out for a hunt.')
 
-    gameState.timerData.huntCountDown = 10  // timerFunctions.checkHuntTimer.execute() decrements this value by one every 10 ticks
+    gameState.timerData.huntCountDown = 10 // timerFunctions.checkHuntTimer.execute() decrements this value by one every 10 ticks
     huntButton.setAttribute('disabled', 'disabled')
     huntTimerDisplay.innerHTML = gameState.timerData.huntCountDown
 
@@ -126,10 +67,26 @@ function goForHunt() {
 }
 
 
-// Global game functions
+// Global functions / Meta functions / Game State functions
 function startGame() {
-    gameState.resources.food = new Resource('Food', 1000, 0.25, "food")
-    gameState.resources.population = new Population()
+    gameState.resources.food = new resourceModule.Food()
+    gameState.resources.population = new resourceModule.Population()
+}
+
+
+function loadGame(savedGameState = JSON.parse(window.localStorage.getItem('gameState'))) {
+    for (const propertyKey in savedGameState) {
+        gameState[propertyKey] = savedGameState[propertyKey]
+    }
+    for (const resourceKey in savedGameState.resources) {
+        const savedResource = savedGameState.resources[resourceKey]
+        gameState.resources[resourceKey] = new resourceModule[savedResource.name]()
+        gameState.resources[resourceKey].fromSavedState = savedResource
+    }
+
+    // how loading resources should work so that it's automatic:
+    // each resource's .name is the same as its class key.
+    // that means
 }
 
 
@@ -138,32 +95,56 @@ function saveGame() {
 }
 
 
+// Game process functions (i.e. all the functions that are used every tick)
+function processGrowth() {
+    gameState.gameDate.currentTickDate += 1
+    for (const resource in gameState.resources) {
+        gameState.resources[resource].processGrowth()
+    }
+}
+
+
+function checkTimers() {
+    try {
+        const currentDate = gameState.gameDate.currentTickDate
+        if (currentDate in gameState.timers) {
+            console.log(currentDate + ': ' + gameState.timers[currentDate])
+            gameState.timers[currentDate].forEach(functionString => {
+                timedFunctions[functionString]()
+            })
+            delete gameState.timers[currentDate]
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+
+function renderUI() { // TODO: potentially generalize this shit? right now it only works for what is in gameState.resources, which might be annoying later idk
+    for (const resource in gameState.resources) {
+        gameState.resources[resource].htmlElement.innerHTML = gameState.resources[resource].displayString
+    }
+}
+
+
 function processTick() {
-    gameState.addTick()
-    gameState.checkTimers()
+    processGrowth()
+    checkTimers()
     renderUI()
 
     saveGame()
     setTimeout(processTick, 100)
 }
 
-
 // Game start
-
-// First start
-if (!window.localStorage.getItem('gameState') || true) {  // TODO: true only if local storage exists
+if (!window.localStorage.getItem('gameState')) {
     console.log('starting game for the first time')
     startGame()
     processTick()
 } else {
     console.log('loading game')
-    gameState.load()
+    loadGame()
     processTick()
-    console.log(gameState.resources)
 }
 
-// Subsequent starts
-
-
 // exports
-export {gameState}
