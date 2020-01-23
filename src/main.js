@@ -1,4 +1,4 @@
-import * as resourceModule from './resources.js'
+import * as resourceModule from './resources/resourceModule.js'
 import { gameState } from './gameState.js'
 
 // HTML related constants
@@ -133,7 +133,7 @@ function processTick() {
     renderUI()
 
     saveGame()
-    setTimeout(processTick, 100)
+    setTimeout(processTick, 10)
 }
 
 // Game start

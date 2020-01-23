@@ -1,4 +1,4 @@
-import { gameState } from './gameState.js'
+import { gameState } from '../gameState.js'
 
 export class Resource {
     constructor(isUnlocked = false, current = 0) {
@@ -32,7 +32,7 @@ export class Resource {
     }
 
     get displayString() {
-        return `${Math.floor(this.current)} / ${Math.floor(this.capacity)} | +${(10 * this.growth).toFixed(2)}/s`
+        return `${(this.current).toFixed(2)} / ${(this.capacity).toFixed(2)} | +${(10 * this.growth).toFixed(2)}/s`
     }
 
 
@@ -73,38 +73,8 @@ export class Resource {
 }
 
 
-export class Population extends Resource {
-    constructor() {
-        super()
-        // Saved
-        this.savedProperties.isUnlocked = true
-        this.savedProperties.current = 8
-
-        // Static
-        this.name = 'Population'
-        this.htmlIDString = 'population'
-    }
-
-    // Capacity
-    get capacity() {
-        return 20
-    }
-
-    // Growth
-    get growth() {
-        const underCapacity = Math.max(0, this.capacity - this.current)
-        const overCapacity = Math.max(0, this.current - this.capacity)
-        const isOverCapacity = this.current > this.capacity
-        if (!isOverCapacity) {
-            return Math.min(
-                this.current * 0.001,
-                this.capacity - this.current
-            )
-        } else {
-            return Math.min(-(overCapacity * 0.01), -0.01)
-        }
-    }
-}
+// .population should have each of the types of population in it, which are their own resources with their own growth and stuff.
+//
 
 export class Food extends Resource {
     constructor() {
